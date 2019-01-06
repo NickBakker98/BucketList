@@ -1,10 +1,12 @@
 package com.example.nick0.bucketlist;
 
 import android.content.Context;
+import android.graphics.Paint;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 
 import java.util.List;
 
@@ -34,6 +36,15 @@ public class BucketListAdapter extends RecyclerView.Adapter<BucketListViewHolder
         // Populate the views with the data from the list
         holder.bucketListCheckBox.setText(bucketListObject.getBucketListTitle());
         holder.description.setText(bucketListObject.getBucketListDescription());
+
+        holder.bucketListCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                int paintFlag = isChecked ? Paint.STRIKE_THRU_TEXT_FLAG : 0;
+                holder.bucketListCheckBox.setPaintFlags(paintFlag);
+                holder.description.setPaintFlags(paintFlag);
+            }
+        });
     }
 
     @Override
