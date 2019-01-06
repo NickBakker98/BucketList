@@ -1,7 +1,9 @@
 package com.example.nick0.bucketlist;
 
+import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,24 +21,36 @@ public class MainActivity extends AppCompatActivity {
 
     private FloatingActionButton add_fab;
     private RecyclerView mBucketListRecyclerView;
+    private MainViewModel mMainViewModel;
 
     List<BucketListObject> mBucketlistObjects = new ArrayList<>();
     BucketListAdapter mAdapter = new BucketListAdapter(this, mBucketlistObjects);
 
-    static AppDatabase db;
+//    static AppDatabase db;
 
-    public final static int TASK_GET_ALL_ITEMS = 0;
-    public final static int TASK_DELETE_ITEMS = 1;
-    public final static int TASK_UPDATE_ITEMS = 2;
-    public final static int TASK_INSERT_ITEMS = 3;
+//    public final static int TASK_GET_ALL_ITEMS = 0;
+//    public final static int TASK_DELETE_ITEMS = 1;
+//    public final static int TASK_UPDATE_ITEMS = 2;
+//    public final static int TASK_INSERT_ITEMS = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        db = AppDatabase.getInstance(this);
-        mBucketlistObjects = db.bucketlistDAO().getAllItems();
+//        db = AppDatabase.getInstance(this);
+//        new BucketListAsyncTask(TASK_GET_ALL_ITEMS).execute();
+
+        mMainViewModel = new MainViewModel(getApplicationContext());
+        mMainViewModel.getItems().observe(this, new Observer<List<BucketListObject>>() {
+            @Override
+            public void onChanged(@Nullable List<BucketListObject> items) {
+                mBucketlistObjects = items;
+                mAdapter.notifyDataSetChanged();
+                mAdapter.swapList(mBucketlistObjects);
+                //updateUI();
+            }
+        });
 
         add_fab = findViewById(R.id.add_item_button);
 
@@ -62,15 +76,14 @@ public class MainActivity extends AppCompatActivity {
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 int position = (viewHolder.getAdapterPosition());
                 final BucketListObject bucketListObject = mBucketlistObjects.get(position);
-                //new BucketListAsyncTask(TASK_DELETE_ITEMS).execute(bucketListObject);
-                db.bucketlistDAO().deleteItems(mBucketlistObjects.get(position));
+//                new BucketListAsyncTask(TASK_DELETE_ITEMS).execute(mBucketlistObjects.get(position));
+                mMainViewModel.delete(mBucketlistObjects.get(position));
                 mBucketlistObjects.remove(position);
-                mAdapter.notifyItemRemoved(position);
                 Toast.makeText(MainActivity.this, "Deleted: " + bucketListObject.getBucketListTitle(), Toast.LENGTH_LONG).show();
             }
         };
-
-
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(mBucketListRecyclerView);
 
         add_fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,17 +92,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, 0);
             }
         });
-
-    }
-
-    private void updateUI() {
-        if (mAdapter == null) {
-
-            mAdapter = new BucketListAdapter(this, mBucketlistObjects);
-            mBucketListRecyclerView.setAdapter(mAdapter);
-        } else {
-            mAdapter.swapList(mBucketlistObjects);
-        }
     }
 
     @Override
@@ -102,44 +104,8 @@ public class MainActivity extends AppCompatActivity {
             mBucketlistObjects.add(newItem);
             mAdapter.notifyDataSetChanged();
             mAdapter.swapList(mBucketlistObjects);
-            db.bucketlistDAO().insertItems(newItem);
-        }
-    }
-
-    public class BucketListAsyncTask extends AsyncTask<BucketListObject, Void, List> {
-        private int taskCode;
-
-        public BucketListAsyncTask(int taskCode) {
-            this.taskCode = taskCode;
-        }
-
-        @Override
-        protected List doInBackground(BucketListObject... items) {
-            switch (taskCode){
-                case TASK_DELETE_ITEMS:
-                    db.bucketlistDAO().deleteItems(items[0]);
-                    break;
-                case TASK_UPDATE_ITEMS:
-                    db.bucketlistDAO().updateItems(items[0]);
-                    break;
-                case TASK_INSERT_ITEMS:
-                    db.bucketlistDAO().insertItems(items[0]);
-                    break;
-            }
-            //To return a new list with the updated data, we get all the data from the database again.
-            return db.bucketlistDAO().getAllItems();
-        }
-
-        @Override
-        protected void onPostExecute(List list) {
-            super.onPostExecute(list);
-            onItemDbUpdated(list);
-        }
-
-
-        public void onItemDbUpdated(List list) {
-            mBucketlistObjects = list;
-            mAdapter.swapList(mBucketlistObjects);
+//            new BucketListAsyncTask(TASK_INSERT_ITEMS).execute(newItem);
+            mMainViewModel.insert(newItem);
         }
     }
 }
