@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private FloatingActionButton add_fab;
+        private FloatingActionButton add_fab;
     private RecyclerView mBucketListRecyclerView;
     private MainViewModel mMainViewModel;
 
