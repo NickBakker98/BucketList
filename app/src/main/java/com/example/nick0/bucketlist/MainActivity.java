@@ -19,28 +19,20 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-        private FloatingActionButton add_fab;
+    //Create the variables.
+    private FloatingActionButton add_fab;
     private RecyclerView mBucketListRecyclerView;
     private MainViewModel mMainViewModel;
 
     List<BucketListObject> mBucketlistObjects = new ArrayList<>();
     BucketListAdapter mAdapter = new BucketListAdapter(this, mBucketlistObjects);
 
-//    static AppDatabase db;
-
-//    public final static int TASK_GET_ALL_ITEMS = 0;
-//    public final static int TASK_DELETE_ITEMS = 1;
-//    public final static int TASK_UPDATE_ITEMS = 2;
-//    public final static int TASK_INSERT_ITEMS = 3;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        db = AppDatabase.getInstance(this);
-//        new BucketListAsyncTask(TASK_GET_ALL_ITEMS).execute();
-
+        //This is the MainViewModel which handles the database.
         mMainViewModel = new MainViewModel(getApplicationContext());
         mMainViewModel.getItems().observe(this, new Observer<List<BucketListObject>>() {
             @Override
@@ -48,13 +40,14 @@ public class MainActivity extends AppCompatActivity {
                 mBucketlistObjects = items;
                 mAdapter.notifyDataSetChanged();
                 mAdapter.swapList(mBucketlistObjects);
-                //updateUI();
             }
         });
 
+        //Linking variables to the xml.file
         add_fab = findViewById(R.id.add_item_button);
-
         mBucketListRecyclerView = findViewById(R.id.recyclerView);
+
+        //Setting the RecyclerView.
         RecyclerView.LayoutManager mLayoutManager = new StaggeredGridLayoutManager(
                 1, LinearLayoutManager.VERTICAL);
         mBucketListRecyclerView.setLayoutManager(mLayoutManager);
@@ -71,20 +64,22 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
-            //Deleting the games by swiping.
+            //Deleting the items by swiping.
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                 int position = (viewHolder.getAdapterPosition());
                 final BucketListObject bucketListObject = mBucketlistObjects.get(position);
-//                new BucketListAsyncTask(TASK_DELETE_ITEMS).execute(mBucketlistObjects.get(position));
                 mMainViewModel.delete(mBucketlistObjects.get(position));
                 mBucketlistObjects.remove(position);
                 Toast.makeText(MainActivity.this, "Deleted: " + bucketListObject.getBucketListTitle(), Toast.LENGTH_LONG).show();
             }
         };
+
+        //Attach the swipe to the recyclerView.
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
         itemTouchHelper.attachToRecyclerView(mBucketListRecyclerView);
 
+        //Add an OnClickListener to the add_fab.
         add_fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -94,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //Get the data from the AddBucketItemActivity and display this in the list.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         String tmpTitle, tmpDescription;
@@ -104,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
             mBucketlistObjects.add(newItem);
             mAdapter.notifyDataSetChanged();
             mAdapter.swapList(mBucketlistObjects);
-//            new BucketListAsyncTask(TASK_INSERT_ITEMS).execute(newItem);
             mMainViewModel.insert(newItem);
         }
     }
